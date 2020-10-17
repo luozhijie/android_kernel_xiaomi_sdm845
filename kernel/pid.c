@@ -39,6 +39,7 @@
 #include <linux/proc_ns.h>
 #include <linux/proc_fs.h>
 #include <linux/anon_inodes.h>
+#include <linux/file.h>
 
 #define pid_hashfn(nr, ns)	\
 	hash_long((unsigned long)nr + (unsigned long)ns, pidhash_shift)
@@ -636,6 +637,43 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
 	put_pid(p);
 	return fd;
 }
+
+struct pid *pidfd_to_pid(const struct file *file)
+{
+	if (file->f_op == &pidfd_fops)
+		return file->private_data;
+
+	return tgid_pidfd_to_pid(file);
+}
+EXPORT_SYMBOL_GPL(pidfd_to_pid);
+
+/**
+ * pidfd_get_pid() - Retrieve a struct pid from a pidfd
+ *
+ * @fd:    pidfd file descriptor
+ * @flags: pointer to store file flags
+ *
+ * Return: On success, a referenced struct pid. On error, ERR_PTR.
+ */
+struct pid *pidfd_get_pid(unsigned int fd, unsigned int *flags)
+{
+	struct fd f;
+	struct pid *pid;
+
+	f = fdget(fd);
+	if (!f.file)
+		return ERR_PTR(-EBADF);
+
+	pid = pidfd_to_pid(f.file);
+	if (!IS_ERR(pid)) {
+		get_pid(pid);
+		*flags = f.file->f_flags;
+	}
+
+	fdput(f);
+	return pid;
+}
+EXPORT_SYMBOL_GPL(pidfd_get_pid);
 
 /*
  * The pid hash table is scaled according to the amount of memory in the

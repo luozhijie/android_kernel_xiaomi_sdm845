@@ -2984,14 +2984,6 @@ static bool access_pidfd_pidns(struct pid *pid)
 	return true;
 }
 
-static struct pid *pidfd_to_pid(const struct file *file)
-{
-	if (file->f_op == &pidfd_fops)
-		return file->private_data;
-
-	return tgid_pidfd_to_pid(file);
-}
-
 static int copy_siginfo_from_user_any(siginfo_t *kinfo, siginfo_t __user *info)
 {
 #ifdef CONFIG_COMPAT
