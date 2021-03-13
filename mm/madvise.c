@@ -1220,10 +1220,20 @@ do_process_madvise(int pidfd, const struct iovec __user *vec,
 		goto release_task;
 	}
 
-	mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
+	/* Require PTRACE_MODE_READ to avoid leaking ASLR metadata. */
+	mm = mm_access(task, PTRACE_MODE_READ_FSCREDS);
 	if (IS_ERR_OR_NULL(mm)) {
 		ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
 		goto release_task;
+	}
+
+	/*
+	 * Require CAP_SYS_NICE for influencing process performance. Note that
+	 * only non-destructive hints are currently supported.
+	 */
+	if (task->mm != current->mm && !capable(CAP_SYS_NICE)) {
+		ret = -EPERM;
+		goto release_mm;
 	}
 
 	total_len = iov_iter_count(&iter);
