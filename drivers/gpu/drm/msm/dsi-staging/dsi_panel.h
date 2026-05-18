@@ -246,6 +246,9 @@ struct dsi_panel {
 
 	bool dispparam_enabled;
 	bool panel_reset_skip;
+	u32 dc_threshold;
+	bool dc_enable;
+	u32 last_bl_lvl;
 
 	char dsc_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;

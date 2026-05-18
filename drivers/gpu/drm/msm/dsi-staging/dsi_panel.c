@@ -959,6 +959,19 @@ static int do_night_bright_map(struct dsi_panel *panel,
 	return bl_lvl;
 }
 
+static u32 dsi_panel_dc_backlight_level(struct dsi_panel *panel, u32 bl_lvl)
+{
+	if (!panel->dc_enable || !panel->dc_threshold || !bl_lvl)
+		return bl_lvl;
+
+	if (bl_lvl >= panel->dc_threshold)
+		return bl_lvl;
+
+	pr_info("[LCD] clamp low backlight in DC mode, bl:%d threshold:%d last_bl:%d\n",
+		bl_lvl, panel->dc_threshold, panel->last_bl_lvl);
+	return panel->dc_threshold;
+}
+
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
@@ -1012,7 +1025,10 @@ int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
 	if (panel->type == EXT_BRIDGE)
 		return 0;
 
+	panel->last_bl_lvl = bl_lvl;
+	bl_lvl = dsi_panel_dc_backlight_level(panel, bl_lvl);
 	pr_debug("backlight type:%d lvl:%d\n", bl->type, bl_lvl);
+
 	switch (bl->type) {
 	case DSI_BACKLIGHT_WLED:
 		led_trigger_event(bl->wled, bl_lvl);
@@ -3608,8 +3624,21 @@ static int dsi_panel_parse_mi_config(struct dsi_panel *panel,
 	panel->off_keep_reset = of_property_read_bool(of_node,
 		"qcom,mdss-panel-off-keep-reset");
 
+	rc = of_property_read_u32(of_node,
+			"qcom,mdss-dsi-panel-dc-threshold",
+			&panel->dc_threshold);
+	if (rc) {
+		panel->dc_threshold = 320;
+		pr_info("default dc backlight threshold is %d\n",
+			panel->dc_threshold);
+		rc = 0;
+	} else {
+		pr_info("dc backlight threshold %d\n", panel->dc_threshold);
+	}
+
 	panel->dsi_panel_off_mode = false;
 	panel->fod_hbm_enabled = false;
+	panel->dc_enable = false;
 
 	return rc;
 }
@@ -4664,6 +4693,32 @@ static int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		pr_info("hbm fod to normal mode\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD2NORM);
 		drm_dev->hbm_status = 1;
+		break;
+	case 0x40000:
+		pr_info("DC on\n");
+		panel->dc_enable = true;
+		if (panel->last_bl_lvl &&
+				panel->last_bl_lvl < panel->dc_threshold) {
+			if (panel->bl_config.type == DSI_BACKLIGHT_WLED)
+				led_trigger_event(panel->bl_config.wled,
+					panel->dc_threshold);
+			else if (panel->bl_config.type == DSI_BACKLIGHT_DCS)
+				dsi_panel_update_backlight(panel,
+					panel->dc_threshold);
+		}
+		break;
+	case 0x50000:
+		pr_info("DC off\n");
+		panel->dc_enable = false;
+		if (panel->last_bl_lvl &&
+				panel->last_bl_lvl < panel->dc_threshold) {
+			if (panel->bl_config.type == DSI_BACKLIGHT_WLED)
+				led_trigger_event(panel->bl_config.wled,
+					panel->last_bl_lvl);
+			else if (panel->bl_config.type == DSI_BACKLIGHT_DCS)
+				dsi_panel_update_backlight(panel,
+					panel->last_bl_lvl);
+		}
 		break;
 	case 0xE0000:
 		pr_info("hbm fod off\n");
