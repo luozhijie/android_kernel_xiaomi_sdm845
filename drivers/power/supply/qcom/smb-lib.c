@@ -2702,7 +2702,7 @@ int smblib_set_prop_input_current_limited(struct smb_charger *chg,
 	return 0;
 }
 
-#define PPS_MAX_ALLOWED_5P8V		5800000
+#define PPS_MAX_ALLOWED_UV		9000000
 int smblib_rerun_aicl(struct smb_charger *chg)
 {
 	int rc, settled_icl_ua;
@@ -2722,7 +2722,7 @@ int smblib_rerun_aicl(struct smb_charger *chg)
 	smblib_dbg(chg, PR_MISC, "re-running AICL\n");
 
 	if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_PD
-			&& chg->voltage_min_uv == PPS_MAX_ALLOWED_5P8V) {
+			&& chg->voltage_min_uv == PPS_MAX_ALLOWED_UV) {
 		smblib_dbg(chg, PR_MISC,
 			"PPS maxium allowed voltage is reached, no need rerun aicl\n");
 		return rc;

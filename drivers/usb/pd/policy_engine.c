@@ -375,8 +375,8 @@ static void *usbpd_ipc_log;
 
 #define PD_VBUS_MAX_VOLTAGE_LIMIT 9000000
 
-/* add for limit APDO voltage to maxium 5800mV for better efficiency */
-#define MAX_ALLOWED_APDO_UV	5800000
+/* Limit APDO voltage to 9V to match the device PD VBUS limit. */
+#define MAX_ALLOWED_APDO_UV	9000000
 
 static bool check_vsafe0v = true;
 module_param(check_vsafe0v, bool, 0600);
@@ -823,7 +823,7 @@ static int pd_select_pdo(struct usbpd *pd, int pdo_pos, int uv, int ua)
 			uv = pd->pd_vbus_max_limit;
 
 		/*
-		 * Set maximum allowed request voltage for apdo to 5.8V
+		 * Set maximum allowed request voltage for APDO.
 		 * for bettery charging efficiency
 		 */
 		if (uv >= MAX_ALLOWED_APDO_UV)
