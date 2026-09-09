@@ -1083,6 +1083,11 @@ SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, siz
 		break;
 #endif
 
+	case BPF_PROG_GET_NEXT_ID:
+	case BPF_MAP_GET_NEXT_ID:
+		err = -ENOENT;
+		break;
+
 	default:
 		err = -EINVAL;
 		break;
