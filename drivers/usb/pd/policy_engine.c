@@ -39,7 +39,7 @@ static bool disable_usb_pd;
 module_param(disable_usb_pd, bool, 0644);
 MODULE_PARM_DESC(disable_usb_pd, "Disable USB PD for USB3.1 compliance testing");
 
-static bool rev3_sink_only;
+static bool rev3_sink_only = true;
 module_param(rev3_sink_only, bool, 0644);
 MODULE_PARM_DESC(rev3_sink_only, "Enable power delivery rev3.0 sink only mode");
 
