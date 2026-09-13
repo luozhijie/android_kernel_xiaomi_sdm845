@@ -1595,7 +1595,7 @@ int qcom_batt_init(int smb_version)
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
 	if (!chip)
 		return -ENOMEM;
-	chip->slave_pct = 50;
+	chip->slave_pct = 55;
 	pl_config_init(chip, smb_version);
 	chip->restricted_current = DEFAULT_RESTRICTED_CURRENT_UA;
 
