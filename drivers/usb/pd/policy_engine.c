@@ -249,8 +249,8 @@ static void *usbpd_ipc_log;
 /* Timeouts (in ms) */
 #define ERROR_RECOVERY_TIME	25
 #define SENDER_RESPONSE_TIME	26
-#define SINK_WAIT_CAP_TIME	500
-#define PS_TRANSITION_TIME	450
+#define SINK_WAIT_CAP_TIME	300
+#define PS_TRANSITION_TIME	300
 #define SRC_CAP_TIME		120
 #define SRC_TRANSITION_TIME	25
 #define SRC_RECOVER_TIME	750
